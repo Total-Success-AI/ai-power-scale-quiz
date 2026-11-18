@@ -1003,6 +1003,7 @@
         <form class="gate-form" onsubmit="submitGate(event)">
           <input type="text" class="gate-input" id="gate-name" placeholder="Your first name" required>
           <input type="email" class="gate-input" id="gate-email" placeholder="Your best email" required>
+          <input type="tel" class="gate-input" id="gate-phone" placeholder="Mobile phone (optional)" autocomplete="tel" maxlength="20" aria-label="Mobile phone (optional)">
           <button type="submit" class="gate-submit">
             Show My Results →
           </button>
@@ -1451,6 +1452,7 @@
       e.preventDefault();
       const name = document.getElementById('gate-name').value.trim();
       const email = document.getElementById('gate-email').value.trim();
+      const phone = document.getElementById('gate-phone').value.trim();
 
       // Show loading state
       const submitBtn = document.querySelector('.gate-submit');
@@ -1470,7 +1472,7 @@
       if (window.parent !== window) {
         window.parent.postMessage(
           {
-            type: 'tsai-quiz-lead', name, email, score: totalScore, level: payload.power_scale_level,
+            type: 'tsai-quiz-lead', name, email, phone, score: totalScore, level: payload.power_scale_level,
             answers: answers.map((a) => {
               const q = questions.find((x) => x.id === a.questionId);
               const pick = q && q.answers.find((x) => x.letter === a.answer);

@@ -533,6 +533,21 @@
       box-shadow: 0 6px 24px rgba(10, 31, 68, 0.35);
     }
 
+    /* "Yes, text me" tick box: shown once a mobile number is typed, never ticked for them. */
+    .gate-textok {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--text-secondary);
+    }
+    .gate-textok[hidden] { display: none; }
+    .gate-textok input { width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; }
+    .gate-textok strong { color: var(--navy); }
+    .gate-textok a { color: var(--navy); text-decoration: underline; }
+
     .gate-privacy {
       font-size: 12px;
       color: var(--text-muted);
@@ -1003,7 +1018,12 @@
         <form class="gate-form" onsubmit="submitGate(event)">
           <input type="text" class="gate-input" id="gate-name" placeholder="Your first name" required>
           <input type="email" class="gate-input" id="gate-email" placeholder="Your best email" required>
-          <input type="tel" class="gate-input" id="gate-phone" placeholder="Mobile phone (optional)" autocomplete="tel" maxlength="20" aria-label="Mobile phone (optional)">
+          <input type="tel" class="gate-input" id="gate-phone" placeholder="Mobile phone (optional)" autocomplete="tel" maxlength="20" aria-label="Mobile phone (optional)" oninput="showTextOk()">
+          <!-- The same words as totalsuccessai.com's forms (lib/text-wording.ts there); change both together. -->
+          <label class="gate-textok" id="gate-textok-row" hidden>
+            <input type="checkbox" id="gate-textok">
+            <span><strong>Yes, text me.</strong> I agree to receive text messages from Total Success AI about classes, events and follow-ups at this number. No spam. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. We do not sell or share your mobile number or text permission with anyone for marketing. <a href="https://www.totalsuccessai.com/terms#text-messages" target="_blank" rel="noopener">Terms</a> · <a href="https://www.totalsuccessai.com/privacy#text-messages" target="_blank" rel="noopener">Privacy</a></span>
+          </label>
           <button type="submit" class="gate-submit">
             Show My Results →
           </button>
@@ -1448,11 +1468,21 @@
     // =============================================
     // EMAIL GATE
     // =============================================
+    // The "Yes, text me" box shows once a number is typed, and only inside totalsuccessai.com/assessment,
+    // because that page is what saves the permission record. Clearing the number unticks it.
+    function showTextOk() {
+      const typed = document.getElementById('gate-phone').value.trim() !== '';
+      const row = document.getElementById('gate-textok-row');
+      row.hidden = !(typed && window.parent !== window);
+      if (row.hidden) document.getElementById('gate-textok').checked = false;
+    }
+
     async function submitGate(e) {
       e.preventDefault();
       const name = document.getElementById('gate-name').value.trim();
       const email = document.getElementById('gate-email').value.trim();
       const phone = document.getElementById('gate-phone').value.trim();
+      const textOk = phone !== '' && document.getElementById('gate-textok').checked;
 
       // Show loading state
       const submitBtn = document.querySelector('.gate-submit');
@@ -1472,7 +1502,7 @@
       if (window.parent !== window) {
         window.parent.postMessage(
           {
-            type: 'tsai-quiz-lead', name, email, phone, score: totalScore, level: payload.power_scale_level,
+            type: 'tsai-quiz-lead', name, email, phone, textOk, score: totalScore, level: payload.power_scale_level,
             answers: answers.map((a) => {
               const q = questions.find((x) => x.id === a.questionId);
               const pick = q && q.answers.find((x) => x.letter === a.answer);
